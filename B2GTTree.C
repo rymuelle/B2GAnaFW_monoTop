@@ -96,6 +96,7 @@ void B2GTTree::Loop(std::string outFileName)
    //std::vector<float> py_v;
    float px, px_total;
    float py, py_total;
+   int subjet_index;
    
    const float HT_cut_value                     = 110;
    const float MET_cut_value_minus_mu           = 110;
@@ -103,19 +104,39 @@ void B2GTTree::Loop(std::string outFileName)
    const float leading_AK8Puppi_jet_pt_cut      = 250;
    const float leading_AK8Puppi_jet_eta_cut     = 2.5;
 
+   const float btag_medium_wp                   = .68; //made up
+   const float btag_loose_wp                   = .50; //made up
+   const float mass_window[2]                   = {110, 210};
+   const float tau3_tau2_wp                     = .6;
+   const float QCD_delta_phi_cut_value          = 1.1;
+   const float bjet_delta_r_cut_value           = 1.5;
 
 
+   //cuts
    int   MET_selection_cut_minus_mu             =  -0;
    int   HT_selection_cut                       =  -0;
    int   leading_AK8Puppi_jet_cut               =  -0;
+   int   top_jet_cut                            =  -0;
+      int   top_jet_cut_bjet                       =  -0;
+      int   top_jet_cut_mass                       =  -0;
+      int   top_jet_cut_tau                       =  -0;
+   int   QCD_delta_phi_cut                        =  -0;
+   int   ttbar_bjet_cut                           =  -0;
 
 
+   //values
    float MET_pt                        =  -100 ;
    float MET_pt_minus_mu               =  -100 ;
    float HT_pt                         =  -100 ;
    float HT_pt_minus_mu                =  -100 ;
    float leading_AK8Puppi_jet_pt       =  -100 ;
-   float leading_AK8Puppi_jet_eta       =  -100 ;
+   float leading_AK8Puppi_jet_eta      =  -100 ;
+   float leading_AK8Puppi_subjet0_CSVv2         =  -100 ;
+   float leading_AK8Puppi_subjet1_CSVv2         =  -100 ;
+   float leading_AK8Puppi_jet_mass              =  -100 ;
+   float leading_AK8Puppi_jet_tau3_tau2         =  -100 ;
+   float QCD_delta_phi_narrow_jets              =  -100 ;
+   float bjet_delta_r_min                       =  -100 ;
 
    //value branches 
    monoTopTree->Branch("HT_pt"     ,   &HT_pt      );
@@ -123,12 +144,25 @@ void B2GTTree::Loop(std::string outFileName)
    monoTopTree->Branch("MET_pt"     ,   &MET_pt      );
    monoTopTree->Branch("leading_AK8Puppi_jet_pt"     ,   &leading_AK8Puppi_jet_pt      );
    monoTopTree->Branch("leading_AK8Puppi_jet_eta"     ,   &leading_AK8Puppi_jet_eta      );
+   monoTopTree->Branch("leading_AK8Puppi_subjet0_CSVv2"     ,   &leading_AK8Puppi_subjet0_CSVv2      );
+   monoTopTree->Branch("leading_AK8Puppi_subjet1_CSVv2"     ,   &leading_AK8Puppi_subjet1_CSVv2      );
+   monoTopTree->Branch("leading_AK8Puppi_jet_mass"     ,   &leading_AK8Puppi_jet_mass      );
+   monoTopTree->Branch("leading_AK8Puppi_jet_tau3_tau2"     ,   &leading_AK8Puppi_jet_tau3_tau2      );
+   monoTopTree->Branch("QCD_delta_phi_narrow_jets"     ,   &QCD_delta_phi_narrow_jets      );
+   monoTopTree->Branch("bjet_delta_r_min"     ,   &bjet_delta_r_min      );
+
 
 
    //cut branches
    monoTopTree->Branch("MET_selection_cut_minus_mu"     ,   &MET_selection_cut_minus_mu      );
    monoTopTree->Branch("HT_selection_cut"     ,   &HT_selection_cut      );
    monoTopTree->Branch("leading_AK8Puppi_jet_cut"     ,   &leading_AK8Puppi_jet_cut      );
+   monoTopTree->Branch("top_jet_cut"     ,   &top_jet_cut      );
+   monoTopTree->Branch("top_jet_cut_bjet"     ,   &top_jet_cut_bjet      );
+   monoTopTree->Branch("top_jet_cut_mass"     ,   &top_jet_cut_mass      );
+   monoTopTree->Branch("top_jet_cut_tau"     ,   &top_jet_cut_tau      );
+   monoTopTree->Branch("QCD_delta_phi_cut"     ,   &QCD_delta_phi_cut      );
+   monoTopTree->Branch("ttbar_bjet_cut"     ,   &ttbar_bjet_cut      );
 
 
 
@@ -140,14 +174,34 @@ void B2GTTree::Loop(std::string outFileName)
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
 
+
+      MET_pt                        =  -100 ;
+      MET_pt_minus_mu               =  -100 ;
+      HT_pt                         =  -100 ;
+      HT_pt_minus_mu                =  -100 ;
+      leading_AK8Puppi_jet_pt       =  -100 ;
+      leading_AK8Puppi_jet_eta      =  -100 ;
+      leading_AK8Puppi_subjet0_CSVv2         =  -100 ;
+      leading_AK8Puppi_subjet1_CSVv2         =  -100 ;
+      leading_AK8Puppi_jet_mass              =  -100 ;
+      leading_AK8Puppi_jet_tau3_tau2         =  -100 ;
+      QCD_delta_phi_narrow_jets              =  -100 ;
+      bjet_delta_r_min                       =  -100 ;
+      
+      MET_selection_cut_minus_mu             =  -0;
+      HT_selection_cut                       =  -0;
+      leading_AK8Puppi_jet_cut               =  -0;
+      top_jet_cut                            =  -0;
+      top_jet_cut_bjet                       =  -0;
+      top_jet_cut_mass                       =  -0;
+      top_jet_cut_tau                        =  -0;
+      QCD_delta_phi_cut                      =  -0;
+      ttbar_bjet_cut                         =  -0;
+
       ////////////////////////////////////////////////
       //HT miss 
       ////////////////////////////////////////////////
 
-      HT_selection_cut = 0;
-
-      px_total  = 0;
-      py_total = 0;
       for (int n=0; n<jetAK4CHS_size; n++) {
          px_total = px_total + jetAK4CHS_Pt[n]*TMath::Cos(jetAK4CHS_Phi[n]);
          py_total = py_total + jetAK4CHS_Pt[n]*TMath::Sin(jetAK4CHS_Phi[n]);   
@@ -165,9 +219,6 @@ void B2GTTree::Loop(std::string outFileName)
       ////////////////////////////////////////////////
       //MET miss minus mu
       ////////////////////////////////////////////////
-      MET_selection_cut_minus_mu = 0;
-      px_total  = 0;
-      py_total = 0;
 
       for (int n=0; n<mu_size; n++) {
          px_total = px_total + mu_Pt[n]*TMath::Cos(mu_Phi[n]);
@@ -192,7 +243,6 @@ void B2GTTree::Loop(std::string outFileName)
       ////////////////////////////////////////////////
       //leadingJet cut
       ////////////////////////////////////////////////
-      leading_AK8Puppi_jet_cut = 0;
 
       if(jetAK8Puppi_size > 0){
          leading_AK8Puppi_jet_pt = jetAK8Puppi_Pt[0];
@@ -206,8 +256,119 @@ void B2GTTree::Loop(std::string outFileName)
       //topJet cut
       ////////////////////////////////////////////////
 
+      if(jetAK8Puppi_size > 0){
+      //btag cut
+         if(subjetAK8Puppi_size >= jetAK8Puppi_vSubjetIndex0[0] and jetAK8Puppi_vSubjetIndex0[0] >= 0){
+            subjet_index = jetAK8Puppi_vSubjetIndex0[0];
+            leading_AK8Puppi_subjet0_CSVv2 = subjetAK8Puppi_CSVv2[ subjet_index ];
+         }
+         if(subjetAK8Puppi_size >= jetAK8Puppi_vSubjetIndex1[0] and jetAK8Puppi_vSubjetIndex1[0] >= 0){
+            subjet_index = jetAK8Puppi_vSubjetIndex1[0];
+            leading_AK8Puppi_subjet1_CSVv2 = subjetAK8Puppi_CSVv2[ subjet_index ];
+         }
+
+         if(TMath::Max(leading_AK8Puppi_subjet0_CSVv2,leading_AK8Puppi_subjet1_CSVv2) > btag_medium_wp){
+            top_jet_cut_bjet = 1;
+         }
+
+      //mass cut
+         leading_AK8Puppi_jet_mass = jetAK8Puppi_filteredMass[0];
+
+         if(mass_window[0]< leading_AK8Puppi_jet_mass && leading_AK8Puppi_jet_mass< mass_window[1]){
+            top_jet_cut_mass = 1;
+         }
 
 
+      //Tau cut
+         leading_AK8Puppi_jet_tau3_tau2 = jetAK8Puppi_tau3[0]/jetAK8Puppi_tau2[0];
+         if(leading_AK8Puppi_jet_tau3_tau2 > tau3_tau2_wp){
+            top_jet_cut_tau = 1;
+         }
+
+         if( top_jet_cut_bjet*top_jet_cut_mass*top_jet_cut_tau > 0){
+            top_jet_cut = 1;
+         }
+      }
+
+
+
+      ////////////////////////////////////////////////
+      //QCD delta met, jet cut
+      ////////////////////////////////////////////////
+
+      
+
+      if(puppimet_size > 0 and jetAK4CHS_size > 0)
+      {
+         QCD_delta_phi_narrow_jets = 100;
+         for(unsigned int n = 0; n < jetAK4CHS_size; n++){
+            float temp_delta_phi =  TMath::Abs(puppimet_Phi[0] - jetAK4CHS_Phi[n]);
+            if( jetAK4CHS_Pt[n] < 30){
+               break;
+            }
+            if( jetAK4CHS_Pt[n] > 30 && TMath::Abs(jetAK4CHS_Eta[n]) < 4.5 ){
+                QCD_delta_phi_narrow_jets = TMath::Min(QCD_delta_phi_narrow_jets, temp_delta_phi );
+            }
+         }
+         if(QCD_delta_phi_narrow_jets > QCD_delta_phi_cut_value){
+            QCD_delta_phi_cut = 1;
+         }
+      } 
+
+
+      ////////////////////////////////////////////////
+      //ttbar delta r bjet, fat jet
+      ////////////////////////////////////////////////
+     
+
+      if(jetAK4CHS_size > 0 && jetAK8Puppi_size > 0){
+
+         for(unsigned int n = 0; n < jetAK4CHS_size; n++){
+            if( jetAK4CHS_CSVv2[n] > btag_loose_wp){
+               int not_subjet = 1;
+               float delta_r = 100;
+
+               //check subjets
+         /*      if(subjetAK8Puppi_size >= jetAK8Puppi_vSubjetIndex0[0] and jetAK8Puppi_vSubjetIndex0[0] >= 0){
+                  subjet_index = jetAK8Puppi_vSubjetIndex0[0];
+                  delta_r = TMath::Sqrt( TMath::Power( jetAK4CHS_Phi[n] - subjetAK8Puppi_Phi[subjet_index], 2  ) + TMath::Power( jetAK4CHS_Eta[n] - subjetAK8Puppi_Eta[subjet_index], 2  ));
+                  std::cout << "subjet0 " << delta_r <<std::endl;
+                  if( delta_r < 0.4){
+                     not_subjet = 0;
+                  }
+               }
+
+               if(subjetAK8Puppi_size >= jetAK8Puppi_vSubjetIndex1[0] and jetAK8Puppi_vSubjetIndex1[0] >= 0){
+                  subjet_index = jetAK8Puppi_vSubjetIndex1[0];
+                  delta_r = TMath::Sqrt( TMath::Power( jetAK4CHS_Phi[n] - subjetAK8Puppi_Phi[subjet_index], 2  ) + TMath::Power( jetAK4CHS_Eta[n] - subjetAK8Puppi_Eta[subjet_index], 2  ));
+                  std::cout << "subjet1 " << delta_r <<std::endl;
+                  if( delta_r < 0.4){
+                     not_subjet = 0;
+                  }
+               }*/
+
+               if( not_subjet == 1){
+                  delta_r = TMath::Sqrt( TMath::Power( jetAK4CHS_Phi[n] - jetAK8Puppi_Phi[0], 2  ) + TMath::Power( jetAK4CHS_Eta[n] - jetAK8Puppi_Eta[0], 2  ));
+               }
+              // std::cout<< " " << jetAK4CHS_Phi[n] << " " << jetAK4CHS_Eta[n] << " " << delta_r << std::endl;
+               float temp_delta_r = TMath::Abs(bjet_delta_r_min);
+               if(delta_r > 0.8 ){
+                  bjet_delta_r_min = TMath::Min(delta_r, temp_delta_r ) ;
+            }
+         }
+
+         if(bjet_delta_r_min > bjet_delta_r_cut_value || bjet_delta_r_min < 0){
+            ttbar_bjet_cut = 1;
+            //std::cout <<"what " << bjet_delta_r_min << std::endl;
+         }
+
+         //std::cout << ttbar_bjet_cut << " " << bjet_delta_r_min << std::endl;
+      }
+            
+
+         
+      //std::cout << HT_pt << std::endl;
+      HT_pt = HT_pt;
       monoTopTree->Fill();
    }
 
